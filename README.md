@@ -1,4 +1,4 @@
-activator-akka-scala-seed
+token-server-scala
 =========================
 
-A minimal seed template for an Akka with Scala build 
+A token server to handle signalling protocol for WebRTC based app
