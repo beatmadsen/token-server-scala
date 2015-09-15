@@ -1,6 +1,9 @@
 package com.madsen.tokenserver.json
 
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
+
+// Combinator syntax
 
 /**
  * Created by erikmadsen on 15/09/2015.
@@ -21,36 +24,38 @@ object SimpleTest extends App {
 
 
 object SumoMessage {
+
+  implicit val fooFormat = Foo.fooFmt
   implicit val format: Format[SumoMessage] = Json.format[SumoMessage]
 }
 
 case class SumoMessage(name: String, foos: Seq[Foo])
 
 object Foo {
-  implicit val barFmt = Json.format[Bar]
-  implicit val bazFmt = Json.format[Baz]
-  implicit val fooFmt: Format[Foo] = new Format[Foo] {
 
-    def reads(json: JsValue): JsResult[Foo] = json match {
-      case JsObject(Seq(("class", JsString(name)), ("data", data))) ⇒
-        name match {
-          case "Bar" ⇒ Json.fromJson[Bar](data)(barFmt)
-          case "Baz" ⇒ Json.fromJson[Baz](data)(bazFmt)
-          case _ ⇒ JsError(s"Unknown class '$name'")
-        }
+  val fooReads: Reads[Foo] = (
+    (JsPath \ "fooType").read[String] and
+      (JsPath \ "value").read[Double]
+    ) { (s, d) ⇒
 
-      case _ ⇒ JsError(s"Unexpected JSON value $json")
-    }
-
-
-    def writes(foo: Foo): JsValue = {
-      val (prod: Product, sub) = foo match {
-        case b: Bar ⇒ (b, Json.toJson(b)(barFmt))
-        case b: Baz ⇒ (b, Json.toJson(b)(bazFmt))
-      }
-      JsObject(Seq("class" -> JsString(prod.productPrefix), "data" -> sub))
+    s match {
+      case "bar" ⇒ Bar(d.toInt)
+      case "baz" ⇒ Baz(d.toFloat)
     }
   }
+
+  val fooWrites: Writes[Foo] = (
+    (JsPath \ "fooType").write[String] and
+      (JsPath \ "value").write[Double]
+    ) { foo: Foo ⇒
+    foo match {
+      case Bar(i) ⇒ ("bar", i.toDouble)
+      case Baz(f) ⇒ ("baz", f.toDouble)
+    }
+  }
+
+  val fooFmt = Format(fooReads, fooWrites)
+
 }
 
 sealed trait Foo
