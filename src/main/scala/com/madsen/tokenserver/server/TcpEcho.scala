@@ -11,7 +11,8 @@ class TcpEcho extends Actor {
 
   override def receive: Receive = {
 
-    case Received(data) ⇒ sender() ! Write(data)
+    case Received(data) ⇒
+      sender() ! Write(data)
     case PeerClosed ⇒ context stop self
   }
 }
